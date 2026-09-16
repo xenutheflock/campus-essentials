@@ -4,28 +4,64 @@
 
 @section('content')
 
-    <div class="card">
+    @if (session('success'))
+        <div class="flash">
+            <span class="label">Saved</span>
+            <span>{{ session('success') }}</span>
+        </div>
+    @endif
+
+    <section class="stats">
+        <div class="stat">
+            <span class="label">Items tracked</span>
+            <p class="stat-value">{{ $stats['items'] }}</p>
+        </div>
+        <div class="stat">
+            <span class="label">Units in stock</span>
+            <p class="stat-value">{{ number_format($stats['units']) }}</p>
+        </div>
+        <div class="stat">
+            <span class="label">Stock value</span>
+            <p class="stat-value">&#8369;{{ number_format($stats['value'], 2) }}</p>
+        </div>
+        <div class="stat">
+            <span class="label">Needs reorder</span>
+            <p class="stat-value {{ $stats['low'] > 0 ? 'is-alert' : '' }}">{{ $stats['low'] }}</p>
+        </div>
+    </section>
+
+    <section class="toolbar">
         <h2>Current Inventory</h2>
 
-        @if (session('success'))
-            <div class="alert-success">{{ session('success') }}</div>
-        @endif
+        <form method="GET" action="{{ route('products.index') }}" class="toolbar-controls">
+            <input type="text" name="q" class="control"
+                   value="{{ request('q') }}"
+                   placeholder="Search item or supplier">
 
-        @if ($products->isEmpty())
+            <select name="category" class="control">
+                <option value="">All categories</option>
+                @foreach ($categories as $option)
+                    <option value="{{ $option }}" @selected(request('category') === $option)>
+                        {{ $option }}
+                    </option>
+                @endforeach
+            </select>
 
-            <p>No items yet. Use <strong>Add New Item</strong> to record your
-               first supply.</p>
+            <button type="submit" class="btn btn--ghost btn--small">Search</button>
+        </form>
+    </section>
 
-        @else
+    @if ($products->isNotEmpty())
 
-            <table>
+        <div class="ledger-wrap">
+            <table class="ledger">
                 <thead>
                     <tr>
-                        <th>Item Name</th>
+                        <th>Item</th>
                         <th>Category</th>
-                        <th>Price</th>
-                        <th>In Stock</th>
-                        <th>Reorder At</th>
+                        <th class="num">Price</th>
+                        <th class="num">In stock</th>
+                        <th class="num">Reorder at</th>
                         <th>Supplier</th>
                         <th>Status</th>
                     </tr>
@@ -33,25 +69,40 @@
                 <tbody>
                     @foreach ($products as $product)
                         <tr>
-                            <td>{{ $product->item_name }}</td>
-                            <td>{{ $product->category }}</td>
-                            <td>₱{{ number_format($product->price, 2) }}</td>
-                            <td>{{ $product->stock_quantity }}</td>
-                            <td>{{ $product->reorder_level }}</td>
-                            <td>{{ $product->supplier }}</td>
+                            <td class="item">{{ $product->item_name }}</td>
+                            <td class="muted">{{ $product->category }}</td>
+                            <td class="num">&#8369;{{ number_format($product->price, 2) }}</td>
+                            <td class="num strong">{{ $product->stock_quantity }}</td>
+                            <td class="num muted">{{ $product->reorder_level }}</td>
+                            <td class="muted">{{ $product->supplier }}</td>
                             <td>
                                 @if ($product->stock_quantity <= $product->reorder_level)
-                                    <span class="badge-low">Reorder now</span>
+                                    <span class="badge badge--alert">Reorder now</span>
                                 @else
-                                    <span class="badge-ok">In stock</span>
+                                    <span class="badge badge--ok">In stock</span>
                                 @endif
                             </td>
                         </tr>
                     @endforeach
                 </tbody>
             </table>
+        </div>
 
-        @endif
-    </div>
+    @else
+
+        <div class="empty">
+            <div>
+                @if (request()->filled('q') || request()->filled('category'))
+                    <p class="empty-title">Nothing matches.</p>
+                    <p class="empty-text">Clear the filters, or record a new supply item.</p>
+                @else
+                    <p class="empty-title">No items yet.</p>
+                    <p class="empty-text">Record your first supply item to start tracking stock.</p>
+                @endif
+            </div>
+            <a href="{{ route('products.create') }}" class="btn">Add New Item</a>
+        </div>
+
+    @endif
 
 @endsection
