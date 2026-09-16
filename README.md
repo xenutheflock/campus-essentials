@@ -24,4 +24,4 @@ php artisan serve
 ```
 
 ## Author
-[Your Name] — [Your Section]
+Group 2 — BSIT-4A
