@@ -188,6 +188,7 @@ document.addEventListener('DOMContentLoaded', function () {
         fields[key].addEventListener('change', update);
     });
 
-    update(); // run once so old() values show up after a failed submission
+    update();
+});
 </script>
 @endpush
